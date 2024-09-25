@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises'
 
- const databasePath= new URL('../db.json', import.meta.url)
+const databasePath = new URL('../db.json', import.meta.url)
 
 export class Database {
   #database = {}
 
   constructor() {
-    fs.readFile( databasePath,'utf8')
+    fs.readFile(databasePath, 'utf8')
       .then(data => {
         this.#database = JSON.parse(data)
       })
@@ -23,7 +23,7 @@ export class Database {
   select(table, search) {
     let data = this.#database[table] ?? []
 
-    if(search) {
+    if (search) {
       data = data.filter(row => {
         return Object.entries(search).some(([key, value]) => {
           return row[key].toLowerCase().includes(value.toLowerCase())
