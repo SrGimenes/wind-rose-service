@@ -1,32 +1,53 @@
-import http, { createServer } from "node:http";
+import http from "node:http";
 import { json } from "./middleware/json.js";
 import { routes } from "./routes.js";
 
 const server = http.createServer(async (req, res) => {
   const { method, url } = req;
-  await json(req, res)
+
+  // Aplicar o middleware json
+  await new Promise(resolve => json(req, res, resolve));
 
   const route = routes.find((route) => {
     return route.method === method && route.path.test(url)
-  })
+  });
 
   if (route) {
-
     const routeParams = req.url.match(route.path);
-
-    const { query, ...params } = routeParams.groups;
-
+    const params = routeParams?.groups || {};
     req.params = params;
-    req.query = query ? extractQueryParams(query) : {};
 
-    console.log(routeParams)
-
-    return route.handler(req, res);
+    try {
+      const result = await route.handler(req, res);
+      if (!res.headersSent) {
+        res.writeHead(result.statusCode, {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'for-CSRF-defense'
+        });
+        res.end(JSON.stringify(result.body));
+      }
+    } catch (error) {
+      console.error('Erro no manipulador de rota:', error);
+      if (!res.headersSent) {
+        res.writeHead(500, {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'for-CSRF-defense'
+        });
+        res.end(JSON.stringify({ error: 'Erro interno do servidor' }));
+      }
+    }
+  } else {
+    if (!res.headersSent) {
+      res.writeHead(404, {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'for-CSRF-defense'
+      });
+      res.end(JSON.stringify({ error: 'Rota não encontrada' }));
+    }
   }
+});
 
-  return res.writeHead(404).end();
+server.listen(3333, () => {
+  console.log('Servidor rodando na porta 3333');
+});
 
-  console.log('Server is running')
-})
-
-server.listen(3333)
