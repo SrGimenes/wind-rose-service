@@ -93,7 +93,7 @@ const sendRequests = async (item) => {
 
   if (!item || typeof item.DataHora === 'undefined') {
     console.error('O item não possui os dados esperados', item)
-    return
+    return { success: false, message: 'Dados inválidos', details: [] }
   }
   const requests = Object.entries(item).map(([key, value]) => {
     let url;
@@ -132,36 +132,64 @@ const sendRequests = async (item) => {
         console.warn(`URL não definida para a chave: ${key}`);
         return null;
     }
-    return axios.post(url, value, { auth, headers });
+    return { key, request: axios.post(url, value, { auth, headers }) };
   }).filter(request => request !== null)
 
   try {
-    const responses = await axios.all(requests);
-    responses.for(response => {
-      console.log('Status', response.status);
-    });
-    return responses.map(response => response.status);
+    const results = await Promise.all(requests.map(async ({ key, request }) => {
+      try {
+        const response = await request;
+        // Verificar se a resposta indica sucesso (pode variar dependendo da API do PIMS)
+        if (response.status === 200 && response.data && response.data.Value === item[key].Value) {
+          return { key, success: true, status: response.status, message: 'Dados cadastrados com sucesso' };
+        }
+        return { key, success: false, status: response.status, message: 'Falha ao cadastrar dados' }
+      } catch (error) {
+        return { key, success: false, status: error.response?.status, message: error.message };
+      }
+    }));
+
+    const failedRequests = results.filter(result => !result.success);
+
+    console.log('Resultados:', results);
+
+    return {
+      success: failedRequests.length === 0,
+      message: failedRequests.length === 0 ? 'Todos os dados foram cadastrados com sucesso' : 'Alguns dados não foram cadastrados',
+      details: results
+    };
   } catch (error) {
     console.error('Erro nas requisições:', error.message);
     console.error('Dados enviados', item);
+    return { success: false, message: 'Erro ao processar requisições', error: error.message, details: [] };
   }
 };
 
 const sendDataWithDelay = async (data) => {
-  console.log('Dados recebidos para envio:', data)
+  console.log('Dados recebidos para envio:', data);
 
   if (!Array.isArray(data)) {
-    console.error('Os dados recebidos não são um array:', data)
-    return;
+    console.error('Os dados recebidos não são um array:', data);
+    return { success: false, message: 'Dados inválidos', details: [] };
   }
 
-  const transformedData = transformDataToPIMS(data);
+  const transformedData = transformDataToPims(data);
+  const results = [];
 
   for (let i = 0; i < transformedData.length; i++) {
     console.log(`Enviando item ${i + 1}:`, transformedData[i]);
-    await sendRequests(transformedData[i]);
+    const result = await sendRequests(transformedData[i])
+    results.push(result)
+    // await sendRequests(transformedData[i]);
     await new Promise(resolve => setTimeout(resolve, 2000));  // 2 segundos de intervalo
   }
+
+  const allSuccessful = results.every(result => result.success);
+  return {
+    success: allSuccessful,
+    message: allSuccessful ? 'Todos os dados foram processados com sucesso' : 'Alguns dados não foram processados corretamente',
+    details: results
+  };
 }
 
 export const routes = [
