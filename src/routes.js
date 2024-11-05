@@ -1,6 +1,7 @@
 import axios from "axios";
 import fs from 'node:fs';
 
+// Configurações
 const auth = {
   username: process.env.USERNAME,
   password: process.env.PASSWORD
