@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import axios from 'axios'
+import { handleProcessError } from './dataFetcher'
 
 // Configurações
 const auth = {
@@ -11,62 +12,6 @@ const headers = {
   'Content-Type': 'application/json',
   'X-Requested-With': 'for-CSRF-defense',
 }
-
-const url = 'https://detectorderaios.com.br/Dados/EURO.csv'
-
-export async function fetchAndProcessData() {
-  try {
-    const response = await fetch(url)
-    const responseText = await response.text()
-
-    const lines = responseText.split('\r\n')
-
-    const headers = lines[0].split(';')
-    const values = lines[1].split(';')
-    const newHeadersArray = headers.slice(1)
-    const newValuesArray = values.slice(1)
-
-    const dateTime = response.headers.get('date')
-    const originalDate = new Date(dateTime)
-    originalDate.setUTCHours(originalDate.getUTCHours() - 3)
-    const dataHora = originalDate.toISOString()
-    const newArray = createObjectFromArrays(
-      newHeadersArray,
-      newValuesArray,
-      dataHora
-    )
-
-    //console.log(headers)
-    console.log(newArray)
-    //console.log(newArray)
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-function createObjectFromArrays(newHeadersArray, newValuesArray, dataHora) {
-  if (
-    newHeadersArray.length !== newValuesArray.length ||
-    newValuesArray.lenght === 0 ||
-    newValuesArray.length === 0
-  ) {
-    return null
-  }
-
-  const object = newHeadersArray.reduce(
-    (acc, cur, idx) => {
-      return {
-        // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-        ...acc,
-        [cur]: Number(newValuesArray[idx].replace(',', '.')),
-      }
-    },
-    { dataHora }
-  )
-  return object
-}
-
-await fetchAndProcessData()
 
 function transformDataToPims(inputData) {
   return inputData.map(item => {
@@ -103,7 +48,7 @@ function transformDataToPims(inputData) {
         UnitsAbbreviation: '%',
         Value: item.Umidade,
       },
-      Radiacao: {
+      RadiacaoSolar: {
         ...basePoint,
         UnitsAbbreviation: 'W/m²',
         Value: item.Radiacao,
@@ -118,7 +63,7 @@ function transformDataToPims(inputData) {
         UnitsAbbreviation: 'mm',
         Value: item.Chuva,
       },
-      Transpiracao: {
+      EvapoTranspiracao: {
         ...basePoint,
         UnitsAbbreviation: 'mm',
         Value: item.Transpiracao,
@@ -127,25 +72,25 @@ function transformDataToPims(inputData) {
   })
 }
 
-const loadData = () => {
-  try {
-    const data = fs.readFileSync(
-      'C:/www/Wind-Rose-Service/db/data.json',
-      'utf-8'
-    )
-    const parsedData = JSON.parse(data)
+// const loadData = () => {
+//   try {
+//     const data = fs.readFileSync(
+//       'C:/www/Wind-Rose-Service/db/data.json',
+//       'utf-8'
+//     )
+//     const parsedData = JSON.parse(data)
 
-    if (!Array.isArray(parsedData)) {
-      console.error('O arquivo JSON não contém um array', parsedData)
-      return []
-    }
+//     if (!Array.isArray(parsedData)) {
+//       console.error('O arquivo JSON não contém um array', parsedData)
+//       return []
+//     }
 
-    return parsedData
-  } catch (error) {
-    console.error('Erro ao ler o arquivo JSON:', error.message)
-    return []
-  }
-}
+//     return parsedData
+//   } catch (error) {
+//     console.error('Erro ao ler o arquivo JSON:', error.message)
+//     return []
+//   }
+// }
 
 const sendRequests = async item => {
   console.log('Enviando item', item)
@@ -300,7 +245,7 @@ export const routes = [
     path: /^\/api\/send-data$/,
     handler: async (req, res) => {
       try {
-        const data = loadData()
+        const data = await handleProcessError()
         await sendDataWithDelay(data)
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(
