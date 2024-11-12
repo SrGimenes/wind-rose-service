@@ -237,5 +237,3 @@ export async function startAutomaticProcess() {
     console.error('Erro ao iniciar processo automático:', error.message)
   }
 }
-
-//console.log(startAutomaticProcess())
