@@ -1,6 +1,8 @@
 import http from 'node:http'
 import { json } from './middleware/json.js'
 import { routes } from './routes.js'
+import { handleProcessError } from './dataFetcher.js'
+import { startAutomaticProcess } from './automaticProcess.js'
 
 const server = http.createServer(async (req, res) => {
   const { method, url } = req
@@ -47,6 +49,16 @@ const server = http.createServer(async (req, res) => {
   }
 })
 
-server.listen(3333, () => {
-  console.log('Servidor rodando na porta 3333')
+server.listen(3333, async() => {
+ console.log('\n=== Wind Rose Service Iniciado ===')
+ console.log('Servidor rodando na porta 3333')
+ console.log('Iniciando processo de coleta de dados...\n')
+
+ try {
+  await handleProcessError()
+ } catch (error) {
+  console.error('❌ Erro ao iniciar processo de coleta:', error.message)
+  console.error('Tipo do erro:', error.name)
+ }
 })
+
