@@ -39,22 +39,24 @@ export async function fetchAndProcessData() {
     const dateTime = response.headers.get('date')
     const originalDate = new Date(dateTime)
     originalDate.setUTCHours(originalDate.getUTCHours() - 3)
-    const dataHora = originalDate.toISOString()
+    const DataHora = originalDate.toISOString()
     const newArray = createObjectFromArrays(
       newHeadersArray,
       newValuesArray,
-      dataHora
+      DataHora
     )
 
     //console.log(headers)
     console.log(newArray)
     //console.log(newArray)
+    return newArray
   } catch (error) {
     console.log(error)
+    throw error
   }
 }
 
-function createObjectFromArrays(newHeadersArray, newValuesArray, dataHora) {
+function createObjectFromArrays(newHeadersArray, newValuesArray, DataHora) {
   if (newHeadersArray.length !== newValuesArray.length) {
     return null
   }
@@ -67,7 +69,9 @@ function createObjectFromArrays(newHeadersArray, newValuesArray, dataHora) {
         [cur]: Number(newValuesArray[idx].replace(',', '.')),
       }
     },
-    { dataHora }
+    { DataHora }
   )
   return object
 }
+
+//console.log(fetchAndProcessData())
