@@ -134,7 +134,7 @@ export const sendRequests = async item => {
           const response = await request
           // Verificar se a resposta indica sucesso (pode variar dependendo da API do PIMS)
           if (
-            response.status === 200 &&
+            (response.status === 200 || response.status === 202) &&
             response.data &&
             response.data.Value === item[key].Value
           ) {
