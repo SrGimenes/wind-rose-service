@@ -38,7 +38,7 @@ export async function fetchAndProcessData() {
 
     const dateTime = response.headers.get('date')
     const originalDate = new Date(dateTime)
-    originalDate.setUTCHours(originalDate.getUTCHours() - 3)
+    originalDate.setUTCHours(originalDate.getUTCHours())
     const DataHora = originalDate.toISOString()
     const newArray = createObjectFromArrays(
       newHeadersArray,
