@@ -1,7 +1,7 @@
 // Configurações
 const auth = {
-  username: 'gabriel.alencar',
-  password: 'Euamo@m10',
+  username: 'process.env.USERNAME',
+  password: 'process.env.PASSWORD',
 }
 
 const headers = {
