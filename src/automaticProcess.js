@@ -1,6 +1,6 @@
+import axios from 'axios'
 import { fetchAndProcessData } from './dataFetcher.js'
 import { auth, headers } from './routes.js'
-import axios from 'axios'
 
 export function transformDataToPims(inputData) {
   return inputData.map(item => {
@@ -135,8 +135,7 @@ export const sendRequests = async item => {
           // Verificar se a resposta indica sucesso (pode variar dependendo da API do PIMS)
           if (
             (response.status === 200 || response.status === 202) &&
-            response.data &&
-            response.data.Value === item[key].Value
+            response.data
           ) {
             return {
               key,
