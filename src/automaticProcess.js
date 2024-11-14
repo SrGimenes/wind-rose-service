@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getUrl } from './config.js'
 import { fetchAndProcessData } from './dataFetcher.js'
 import { auth, headers } from './routes.js'
 
@@ -71,57 +72,12 @@ export const sendRequests = async item => {
     return { success: false, message: 'Dados não fornecido', details: [] }
   }
 
-  // if (!item || typeof item.DataHora === 'undefined') {
-  //   console.error('O item não possui os dados esperados', item)
-  //   return { success: false, message: 'Dados inválidos', details: [] }
-  // }
   const requests = Object.entries(item)
     .map(([key, value]) => {
-      let url
-      switch (key) {
-        case 'TimeStamp':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_w3CoAAARUNTQUxWTTA1NlxSU0RSLUVNLlRJTUU/value'
-          break
-        case 'VelVento':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wpioAAARUNTQUxWTTA1NlxSU0RSLUVNLlZFTA/value'
-          break
-        case 'DirVento':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wpyoAAARUNTQUxWTTA1NlxSU0RSLUVNLkRJUg/value'
-          break
-        case 'Pressao':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wqCoAAARUNTQUxWTTA1NlxSU0RSLUVNLlBSRVM/value'
-          break
-        case 'Temperatura':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wqSoAAARUNTQUxWTTA1NlxSU0RSLUVNLlRFTVA/value'
-          break
-        case 'Umidade':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wqioAAARUNTQUxWTTA1NlxSU0RSLUVNLlVNSQ/value'
-          break
-        case 'RadiacaoSolar':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wqyoAAARUNTQUxWTTA1NlxSU0RSLUVNLlJBRA/value'
-          break
-        case 'UV':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wrCoAAARUNTQUxWTTA1NlxSU0RSLUVNLlVW/value'
-          break
-        case 'Chuva':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wrSoAAARUNTQUxWTTA1NlxSU0RSLUVNLkNIVQ/value'
-          break
-        case 'EvapoTranspiracao':
-          url =
-            'https://vision.eurochemsam.com/PIwebapi/streams/F1DPmBHDxoYLp0mMALSvhSrD_wrioAAARUNTQUxWTTA1NlxSU0RSLUVNLlRSQU4/value'
-          break
-        default:
-          console.warn(`URL não definida para a chave: ${key}`)
-          return null
+      const url = getUrl(key)
+      if (!url) {
+        console.warn(`URL não definida para a chave ${key}`)
+        return null
       }
       return { key, request: axios.post(url, value, { auth, headers }) }
     })
