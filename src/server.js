@@ -1,7 +1,8 @@
 import http from 'node:http'
+import { startAutomaticProcess } from './automaticProcess.js'
 import { json } from './middleware/json.js'
 import { routes } from './routes.js'
-import { startAutomaticProcess } from './automaticProcess.js'
+import 'dotenv/config'
 
 const server = http.createServer(async (req, res) => {
   const { method, url } = req
