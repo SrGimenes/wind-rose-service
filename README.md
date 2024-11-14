@@ -1,20 +1,76 @@
-Validação:
+# Wind Rose Service
 
-[] DataHora não está gravando - Está gravando porem ela grava realizando a sobrepozição do dado
-[] DirVento retorna valor invalido
-[] Gravação duplicada - todas - Verificar se a requisição está sendo chamada 2 vezes
-[] Retorno dos valores de tags zerados,
-[] Testar outro metodo de requisição,
-[] Realizar agregação de data com valor de tag
+Automated service that collects meteorological data from CSV and sends to PIMS API endpoints at regular intervals.
 
-- Maneira de vincular data da maneira correta
+# Clone repository
+git clone https://github.com/SrGimenes/wind-rose-service.git
 
-    Maneira 1:
-        Realizar o cadastro padrão de cada valor, da maneira que a API atual faz
-        Realiza a criação de um banco de dados próprio para cadastrar os dados de cada tag
-        Realiza o consumo dos dados com seu respectivo relacionamento
+### Data Flow
 
-    Passos:
-        (Faça isso a cada 15 minutos)
-        1° - realizar o cadastro de cada valor, referente a cada WebId
-        2° - realizar o update de cada valor timestamp, refente a cada WebId
+- CSV data collection (1-minute intervals)
+- Data transformation to PIMS format
+- Distributed sending to endpoints
+- Automatic cycle management
+
+## Structure
+
+![alt text](image.png)
+
+## Core Components
+
+### dataFetcher.js
+
+#### fetchAndProcessData()
+- Fetches data from CSV endpoint
+- Splits into headers and values 
+- Adds timestamp with Brazil timezone
+- Returns formatted measurement object
+
+#### createObjectFromArrays()
+- Converts arrays to structured object
+- Handles data type conversions
+- Validates data integrity
+
+### automaticProcess.js 
+
+#### transformDataToPims()
+- Input: Raw data object
+- Converts to PIMS format
+- Adds metadata (units, timestamps)
+- Handles field transformations
+- Output: PIMS-compatible object
+
+#### sendRequests()
+- Manages individual API requests
+- Maps data to endpoints
+- Handles authentication
+- Validates responses
+- Provides error reporting
+
+#### sendDataWithDelay()  
+- Controls request timing
+- Implements 2-second delays
+- Manages request batching
+- Tracks success/failure
+
+#### startAutomaticProcess()
+- Initializes data collection
+- Manages 1-minute update cycle  
+- Handles error recovery
+- Maintains process logs
+
+### Configuration
+
+```javascript
+// Auth setup
+const auth = {
+  username: process.env.USERNAME,
+  password: process.env.PASSWORD
+}
+
+// API headers
+const headers = {
+  'Content-Type': 'application/json',
+  'X-Requested-With': 'for-CSRF-defense'
+}
+
