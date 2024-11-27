@@ -1,5 +1,5 @@
-import axios from "axios";
+import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: 'https://vision.eurochemsam.com/PIwebapi/streams/'
+  baseURL: 'your web api url',
 })
